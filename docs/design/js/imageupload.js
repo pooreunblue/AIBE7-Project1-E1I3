@@ -23,7 +23,8 @@ async function handleUpload(event) {
   }
 
   const ext = file.name.split('.').pop();
-  const safeName = `${crypto.randomUUID()}.${ext}`;
+  const rid = roomId || "global";
+  const safeName = `${rid}/${crypto.randomUUID()}.${ext}`;
 
   try {
     const session = readSBSession();
@@ -87,7 +88,7 @@ async function renderImageList(container) {
           Authorization: `Bearer ${session.access_token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ prefix: "", limit: 100, offset: 0 }),
+        body: JSON.stringify({ prefix: `${roomId || "global"}/`, limit: 100, offset: 0 }),
       },
     );
 
