@@ -159,12 +159,12 @@ function appendImageCard(container, name) {
   container.append(colDiv);
 }
 
-// localStorage 읽기/쓰기 헬퍼
-const ALBUM_KEY = "motrip:album:images";
+// localStorage 읽기/쓰기 헬퍼 (방별)
+const ALBUM_KEY = () => `motrip:album:${roomId || "global"}:images`;
 
 function getAlbumList() {
   try {
-    return JSON.parse(localStorage.getItem(ALBUM_KEY) || "[]");
+    return JSON.parse(localStorage.getItem(ALBUM_KEY()) || "[]");
   } catch {
     return [];
   }
@@ -174,13 +174,13 @@ function addAlbumImage(name) {
   const list = getAlbumList();
   if (!list.includes(name)) {
     list.push(name);
-    localStorage.setItem(ALBUM_KEY, JSON.stringify(list));
+    localStorage.setItem(ALBUM_KEY(), JSON.stringify(list));
   }
 }
 
 function removeAlbumImage(name) {
   const list = getAlbumList().filter(n => n !== name);
-  localStorage.setItem(ALBUM_KEY, JSON.stringify(list));
+  localStorage.setItem(ALBUM_KEY(), JSON.stringify(list));
 }
 
 async function handleImageDelete(name, colDiv) {
@@ -193,26 +193,12 @@ async function handleImageDelete(name, colDiv) {
       return;
     }
 
-    const res = await fetch(
-      `https://porvghadkgpamnvbuyqu.supabase.co/storage/v1/object/image/delete`,
-      {
-        method: "POST",
-        headers: {
-          apikey: "sb_publishable_cpvF4f7QZzxK16Q_-JNM5A_czghLSxK",
-          Authorization: `Bearer ${session.access_token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ prefixes: [name] }),
-      },
-    );
+    const { error } = await supabaseClient.storage.from('image').remove([name]);
 
-    if (!res.ok) {
-      const errText = await res.text();
-      console.error("삭제 에러:", res.status, errText);
-      if (errText.includes("row-level security") || res.status === 401 || res.status === 403) {
+    if (error) {
+      console.error("삭제 에러:", error);
+      if (error.message?.includes("row-level security") || error?.statusCode === 401 || error?.statusCode === 403) {
         showToast("삭제 권한이 없습니다. Supabase Storage 'image' 버킷의 RLS를 확인해 주세요.");
-      } else if (res.status === 404) {
-        showToast("파일을 찾을 수 없습니다.");
       } else {
         showToast("삭제에 실패했습니다.");
       }
