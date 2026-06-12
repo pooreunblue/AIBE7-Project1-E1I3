@@ -234,6 +234,21 @@ async function initChat () {
     return;
   }
 
+  // 여행방이 없으면 AI 추천 사용 불가
+  const myRooms = getMyRooms();
+  if (!myRooms || myRooms.length === 0) {
+    chatMessages.innerHTML = `
+      <div class="text-center py-5" style="margin-top:4rem;">
+        <p class="fs-5 mb-2">아직 여행방이 없어요!</p>
+        <p class="text-secondary mb-4">AI 여행 추천을 받으려면 먼저 여행방을 만들어 주세요.</p>
+        <a class="btn btn-primary btn-pill px-4" href="./room-create.html">새 여행 만들기</a>
+      </div>
+    `;
+    chatInput.disabled = true;
+    sendBtn.disabled = true;
+    return;
+  }
+
   await loadChatHistory();
 
   // 불러온 내역이 없으면 환영 메시지

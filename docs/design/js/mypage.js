@@ -57,20 +57,50 @@ async function renderMyRooms() {
     wrap.innerHTML = rooms.map(r => {
       const period = `${r.start_date || "?"} ~ ${r.end_date || "?"}`;
       return `<div class="col-md-6 col-lg-4">
-        <a href="./room.html?roomId=${r.id}" class="text-decoration-none">
-          <div class="card border-0 shadow-sm rounded-4 h-100" style="cursor:pointer;">
+        <div class="card border-0 shadow-sm rounded-4 h-100 position-relative">
+          <a href="./room.html?roomId=${r.id}" class="text-decoration-none">
             <div class="card-body p-4">
               <h6 class="fw-bold text-dark mb-1">${escapeHtml(r.title)}</h6>
               <p class="text-secondary small mb-0">${escapeHtml(r.destination || "목적지 미정")}</p>
               <p class="text-secondary small mb-0">${escapeHtml(period)}</p>
             </div>
+          </a>
+          <div class="card-footer bg-transparent border-0 pt-0 pb-3 px-4">
+            <button class="btn btn-outline-danger btn-sm w-100 room-delete" data-room-id="${r.id}" data-room-title="${escapeAttr(r.title)}">여행방 삭제</button>
           </div>
-        </a>
+        </div>
       </div>`;
     }).join("");
+    wrap.querySelectorAll(".room-delete").forEach(btn => {
+      btn.addEventListener("click", handleRoomDelete);
+    });
   } catch {
     wrap.innerHTML = `<div class="col-12 text-center text-secondary py-5">여행방 목록을 불러오지 못했습니다.</div>`;
   }
+}
+
+async function handleRoomDelete(e) {
+  const btn = e.currentTarget;
+  const roomId = btn.dataset.roomId;
+  const title = btn.dataset.roomTitle;
+  if (!confirm(`"${title}" 여행방을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`)) return;
+  try {
+    btn.disabled = true;
+    btn.textContent = "삭제 중...";
+    await deleteRoom(roomId);
+    forgetRoom(roomId);
+    localStorage.removeItem(`motrip:me:${roomId}`);
+    showToast("여행방이 삭제되었습니다.");
+    renderMyRooms();
+  } catch {
+    showToast("삭제에 실패했습니다.");
+    btn.disabled = false;
+    btn.textContent = "여행방 삭제";
+  }
+}
+
+function escapeAttr(str) {
+  return String(str ?? "").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
 
 /* ══════════════════════════════════════════
