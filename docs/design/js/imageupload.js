@@ -194,21 +194,23 @@ async function handleImageDelete(name, colDiv) {
     }
 
     const res = await fetch(
-      `https://porvghadkgpamnvbuyqu.supabase.co/storage/v1/object/image/${encodeURIComponent(name)}`,
+      `https://porvghadkgpamnvbuyqu.supabase.co/storage/v1/object/image/delete`,
       {
-        method: "DELETE",
+        method: "POST",
         headers: {
           apikey: "sb_publishable_cpvF4f7QZzxK16Q_-JNM5A_czghLSxK",
           Authorization: `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
         },
+        body: JSON.stringify({ prefixes: [name] }),
       },
     );
 
     if (!res.ok) {
       const errText = await res.text();
       console.error("삭제 에러:", res.status, errText);
-      if (res.status === 401 || res.status === 403) {
-        showToast("삭제 권한이 없습니다.");
+      if (errText.includes("row-level security") || res.status === 401 || res.status === 403) {
+        showToast("삭제 권한이 없습니다. Supabase Storage 'image' 버킷의 RLS를 확인해 주세요.");
       } else if (res.status === 404) {
         showToast("파일을 찾을 수 없습니다.");
       } else {
