@@ -1,5 +1,4 @@
 .DS_Store
-docs/design/js/config.js
 opencode.json
 node_modules/
 .env
